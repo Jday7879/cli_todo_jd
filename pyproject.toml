@@ -5,3 +5,9 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []
+
+[project.scripts]
+cli_add = "cli_todo.cli_entry:add_item"
+cli_remove = "cli_todo.cli_entry:remove_item"
+cli_list = "cli_todo.cli_entry:list_items"
+cli_clear = "cli_todo.cli_entry:clear_list"
