@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "questionary>=2.1.1",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -17,3 +19,4 @@ cli_add = "cli_todo.cli_entry:add_item"
 cli_remove = "cli_todo.cli_entry:remove_item"
 cli_list = "cli_todo.cli_entry:list_items"
 cli_clear = "cli_todo.cli_entry:clear_list"
+cli_menu =  "cli_todo.main:cli_menu"

@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import questionary
 
 
 def main():
@@ -78,6 +79,64 @@ def clear_list_of_items(filepath):
     app.write_todos()
 
 
+def cli_menu(filepath="./.cli_todo.json"):
+    app = create_list(file_path_to_json=filepath)
+    while True:
+        action = questionary.select(
+            "What would you like to do?",
+            choices=[
+                "Add todo",
+                "List todos",
+                "Remove todo",
+                "Clear all todos",
+                "Exit",
+            ],
+        ).ask()
+
+        if action == "Add todo":
+            item = questionary.text("Enter the todo item:").ask()
+            app.add_todo(item)
+            app.write_todos()
+        elif action == "List todos":
+            app.list_todos()
+        elif action == "Remove todo":
+            if not app.todos:
+                print("No todos to remove.")
+                continue
+            todo_choice = questionary.select(
+                "Select the todo to remove:",
+                choices=["<Back>"] + app.todos,
+            ).ask()
+
+            if todo_choice == "<Back>":
+                continue
+
+            todo_to_remove = app.todos.index(todo_choice) + 1
+            app.remove_todo(todo_to_remove)
+            app.write_todos()
+
+        elif action == "Clear all todos":
+            confirm = questionary.confirm(
+                "Are you sure you want to clear all todos?"
+            ).ask()
+            if confirm:
+                app.todos = []
+                print("Cleared all todos.")
+                app.write_todos()
+        elif action == "Clear all todos":
+            confirm = questionary.confirm(
+                "Are you sure you want to clear all todos?"
+            ).ask()
+            if confirm:
+                app.todos = []
+                print("Cleared all todos.")
+                app.write_todos()
+        elif action == "Exit":
+            break
+        else:
+            break
+
+
 if __name__ == "__main__":
     # # Persist todos to a JSON file in the user's home directory.
     # app = create_app()
@@ -89,4 +148,4 @@ if __name__ == "__main__":
     # app.remove_todo(3)
     # app.list_todos()
     # app.write_todos()
-    remove_item_from_list(3, "./.cli_todo.json")
+    cli_menu()
