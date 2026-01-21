@@ -11,3 +11,4 @@ wheels/
 
 # todo list
 .cli_todo.json
+uv.lock

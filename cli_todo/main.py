@@ -1,9 +1,11 @@
 import json
 from pathlib import Path
 
+
 def main():
     TodoApp()
-    
+
+
 class TodoApp:
     def __init__(self, file_path_to_json="./.cli_todo.json"):
         self.todos = []
@@ -28,7 +30,7 @@ class TodoApp:
             print(f'Removed todo: "{removed}"')
         except IndexError:
             print("Error: Invalid todo index.")
-    
+
     def _check_and_load_todos(self, file_path):
         if file_path.exists():
             try:
@@ -49,15 +51,18 @@ def create_list(file_path_to_json="./.cli_todo.json"):
     app = TodoApp(file_path_to_json=file_path_to_json)
     return app
 
+
 def add_item_to_list(item, filepath):
     app = create_list(file_path_to_json=filepath)
     app.add_todo(item)
     app.list_todos()
     app.write_todos()
 
+
 def list_items_on_list(filepath):
     app = create_list(file_path_to_json=filepath)
     app.list_todos()
+
 
 def remove_item_from_list(index, filepath):
     app = create_list(file_path_to_json=filepath)
@@ -65,13 +70,12 @@ def remove_item_from_list(index, filepath):
     app.list_todos()
     app.write_todos()
 
+
 def clear_list_of_items(filepath):
     app = create_list(file_path_to_json=filepath)
     app.todos = []
     print("Cleared all todos.")
     app.write_todos()
-
-
 
 
 if __name__ == "__main__":

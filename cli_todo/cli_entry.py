@@ -1,6 +1,11 @@
 from argparse import ArgumentParser
-from email import parser
-from cli_todo.main import add_item_to_list, remove_item_from_list, list_items_on_list, clear_list_of_items
+from cli_todo.main import (
+    add_item_to_list,
+    remove_item_from_list,
+    list_items_on_list,
+    clear_list_of_items,
+)
+
 
 def parser_optional_args(parser: ArgumentParser):
     parser.add_argument(
@@ -9,6 +14,7 @@ def parser_optional_args(parser: ArgumentParser):
         help="Path to the file to process",
         default="./.cli_todo.json",
     )
+
 
 def add_item():
     parser = ArgumentParser(description="Add a todo item")
@@ -23,6 +29,7 @@ def add_item():
     args.item = " ".join(args.item)
     add_item_to_list(args.item, args.filepath)
 
+
 def remove_item():
     parser = ArgumentParser(description="Remove a todo item by index")
     parser.add_argument(
@@ -35,12 +42,14 @@ def remove_item():
     args = parser.parse_args()
     remove_item_from_list(args.index, args.filepath)
 
+
 def list_items():
     parser = ArgumentParser(description="List all todo items")
     parser_optional_args(parser)
 
     args = parser.parse_args()
     list_items_on_list(args.filepath)
+
 
 def clear_list():
     parser = ArgumentParser(description="Clear all todo items")
@@ -56,7 +65,9 @@ def clear_list():
     list_items_on_list(args.filepath)
 
     if not args.yes:
-        resp = input(f"Clear all todo items in '{args.filepath}'? [y/n]: ").strip().lower()
+        resp = (
+            input(f"Clear all todo items in '{args.filepath}'? [y/n]: ").strip().lower()
+        )
         if resp not in ("y", "yes"):
             return
 
