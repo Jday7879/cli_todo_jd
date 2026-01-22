@@ -12,7 +12,7 @@ def parser_optional_args(parser: ArgumentParser):
         "-f",
         "--filepath",
         help="Path to the file to process",
-        default="./.cli_todo.json",
+        default="./.todo_list.json",
     )
 
 

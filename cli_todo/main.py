@@ -11,7 +11,7 @@ def main():
 
 
 class TodoApp:
-    def __init__(self, file_path_to_json="./.cli_todo.json"):
+    def __init__(self, file_path_to_json="./.todo_list.json"):
         self.todos = []
         self.file_path_to_json = Path(file_path_to_json)
         self._check_and_load_todos(self.file_path_to_json)
@@ -65,7 +65,7 @@ class TodoApp:
         self._console.print(Padding(table, (2, 2)))
 
 
-def create_list(file_path_to_json="./.cli_todo.json"):
+def create_list(file_path_to_json="./.todo_list.json"):
     app = TodoApp(file_path_to_json=file_path_to_json)
     return app
 
@@ -96,7 +96,7 @@ def clear_list_of_items(filepath):
     app.write_todos()
 
 
-def cli_menu(filepath="./.cli_todo.json"):
+def cli_menu(filepath="./.todo_list.json"):
     app = create_list(file_path_to_json=filepath)
     while True:
         action = questionary.select(
@@ -152,19 +152,3 @@ def cli_menu(filepath="./.cli_todo.json"):
             break
         else:
             break
-
-
-if __name__ == "__main__":
-    # # Persist todos to a JSON file in the user's home directory.
-    # app = create_app()
-    # # Example usage
-    # app.add_todo("Buy milk")
-    # app.add_todo("Read a book")
-    # app.list_todos()
-    # app.remove_todo(3)
-    # app.remove_todo(3)
-    # app.list_todos()
-    # app.write_todos()
-    # cli_menu()
-    app = create_list()
-    app.list_todos()
