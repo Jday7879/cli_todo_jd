@@ -12,7 +12,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pre-commit",
-    "pytest"
+    "pytest",
+    "bump-my-version"
 ]
 
 [project.scripts]
@@ -21,3 +22,25 @@ todo_remove = "cli_todo.cli_entry:remove_item"
 todo_list = "cli_todo.cli_entry:list_items"
 todo_clear = "cli_todo.cli_entry:clear_list"
 todo_menu =  "cli_todo.main:cli_menu"
+
+[tool.bumpversion]
+current_version = "0.1.0"
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
+serialize = ["{major}.{minor}.{patch}"]
+search = "{current_version}"
+replace = "{new_version}"
+regex = false
+ignore_missing_version = false
+ignore_missing_files = false
+tag = false
+sign_tags = false
+tag_name = "v{new_version}"
+tag_message = "Bump version: {current_version} → {new_version}"
+allow_dirty = false
+commit = false
+message = "Bump version: {current_version} → {new_version}"
+moveable_tags = []
+commit_args = "--no-verify"
+setup_hooks = []
+pre_commit_hooks = []
+post_commit_hooks = []
