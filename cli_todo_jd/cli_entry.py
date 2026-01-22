@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from cli_todo.main import (
+from cli_todo_jd.main import (
     add_item_to_list,
     remove_item_from_list,
     list_items_on_list,
