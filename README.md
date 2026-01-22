@@ -11,12 +11,12 @@ with the list.
 
 Once installed us `todo_menu` to launch into the interactive menu. From here you can add,
 remove, list, or clear your todo list. Items in your list are stored (by default) as
-`.todo_list.json`. The menu does not currently support arguments to point to alternate file locations.
+`.todo_list.json`. The menu does also support optional filepaths using `-f` or `--filepath`.
 
 
 ### interacting with todo list without menu
 
-Alternatly you can interact directly using the following commands
+Alternatly you can interact directly using the following commands (`--filepath can be substituted for -f`)
 
 - `todo_add text --filepath optional_path_to_json` used to add an item to your list
 - `todo_remove index --filepath optional_path_to_json` used to remove item number `index`

@@ -4,6 +4,7 @@ from cli_todo_jd.main import (
     remove_item_from_list,
     list_items_on_list,
     clear_list_of_items,
+    cli_menu,
 )
 
 
@@ -73,3 +74,11 @@ def clear_list():
 
     # assuming remove_item_from_list(0/None) clears; otherwise replace with your clear implementation
     clear_list_of_items(args.filepath)
+
+
+def todo_menu():
+    parser = ArgumentParser(description="Todo List CLI Menu")
+    parser_optional_args(parser)
+    args = parser.parse_args()
+
+    cli_menu(filepath=args.filepath)
