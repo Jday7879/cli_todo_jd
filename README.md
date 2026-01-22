@@ -2,6 +2,27 @@
 
 A command line to do list with interactive menu
 
+## What is`cli-todo-jd`?
+
+This is a command line interface todo list. Once installed, there are two ways to interact 
+with the list. 
+
+### `todo-menu`
+
+Once installed us `todo_menu` to launch into the interactive menu. From here you can add,
+remove, list, or clear your todo list. Items in your list are stored (by default) as
+`.todo_list.json`. The menu does not currently support arguments to point to alternate file locations.
+
+
+### interacting with todo list without menu
+
+Alternatly you can interact directly using the following commands
+
+- `todo_add text --filepath optional_path_to_json` used to add an item to your list
+- `todo_remove index --filepath optional_path_to_json` used to remove item number `index`
+- `todo_list --filepath optional_path_to_json` used to view list
+- `todo_clear --filepath optional_path_to_json` used to clear list (prompts y/n to confirm)
+
 ## Getting started
 
 To start using this project, first make sure your system meets its
