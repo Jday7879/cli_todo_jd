@@ -51,7 +51,7 @@ class TodoApp:
 
     def _table_print(
         self,
-        title: str | None = "Todo List",
+        title: str | None = None,
         style: str = "bold cyan",
     ):
         table = Table(
