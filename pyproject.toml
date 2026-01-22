@@ -1,5 +1,5 @@
 [project]
-name = "cli-todo-jday"
+name = "cli-todo-jd"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -17,11 +17,11 @@ dev = [
 ]
 
 [project.scripts]
-todo_add = "cli_todo_jday.cli_entry:add_item"
-todo_remove = "cli_todo_jday.cli_entry:remove_item"
-todo_list = "cli_todo_jday.cli_entry:list_items"
-todo_clear = "cli_todo_jday.cli_entry:clear_list"
-todo_menu =  "cli_todo_jday.main:cli_menu"
+todo_add = "cli_todo_jd.cli_entry:add_item"
+todo_remove = "cli_todo_jd.cli_entry:remove_item"
+todo_list = "cli_todo_jd.cli_entry:list_items"
+todo_clear = "cli_todo_jd.cli_entry:clear_list"
+todo_menu =  "cli_todo_jd.main:cli_menu"
 
 [tool.bumpversion]
 current_version = "0.1.0"

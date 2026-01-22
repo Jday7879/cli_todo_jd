@@ -11,6 +11,10 @@ def main():
 
 
 class TodoApp:
+    """
+    A simple command-line todo application.
+    """
+
     def __init__(self, file_path_to_json="./.todo_list.json"):
         self.todos = []
         self.file_path_to_json = Path(file_path_to_json)
@@ -65,31 +69,80 @@ class TodoApp:
         self._console.print(Padding(table, (2, 2)))
 
 
-def create_list(file_path_to_json="./.todo_list.json"):
+def create_list(file_path_to_json: str = "./.todo_list.json"):
+    """
+    Create a new todo list.
+
+    Parameters
+    ----------
+    file_path_to_json : str, optional
+        The file path to the JSON file for storing todos, by default "./.todo_list.json"
+
+    Returns
+    -------
+    TodoApp
+        An instance of the TodoApp class.
+    """
     app = TodoApp(file_path_to_json=file_path_to_json)
     return app
 
 
-def add_item_to_list(item, filepath):
+def add_item_to_list(item: str, filepath: str):
+    """
+    Add a new item to the todo list.
+
+    Parameters
+    ----------
+    item : str
+        The todo item to add.
+    filepath : str
+        The file path to the JSON file for storing todos.
+    """
     app = create_list(file_path_to_json=filepath)
     app.add_todo(item)
     app.list_todos()
     app.write_todos()
 
 
-def list_items_on_list(filepath):
+def list_items_on_list(filepath: str):
+    """
+    List all items in the todo list.
+
+    Parameters
+    ----------
+    filepath : str
+        The file path to the JSON file for storing todos.
+    """
     app = create_list(file_path_to_json=filepath)
     app.list_todos()
 
 
-def remove_item_from_list(index, filepath):
+def remove_item_from_list(index: int, filepath: str):
+    """
+    remove an item from the todo list using index
+
+    Parameters
+    ----------
+    index : int
+        The index of the todo item to remove.
+    filepath : str
+        The file path to the JSON file for storing todos.
+    """
     app = create_list(file_path_to_json=filepath)
     app.remove_todo(index)
     app.list_todos()
     app.write_todos()
 
 
-def clear_list_of_items(filepath):
+def clear_list_of_items(filepath: str):
+    """
+    Clear all items from the todo list.
+
+    Parameters
+    ----------
+    filepath : str
+        The file path to the JSON file for storing todos.
+    """
     app = create_list(file_path_to_json=filepath)
     app.todos = []
     print("Cleared all todos.")
@@ -97,6 +150,14 @@ def clear_list_of_items(filepath):
 
 
 def cli_menu(filepath="./.todo_list.json"):
+    """
+    Display the command-line interface menu for the todo list.
+
+    Parameters
+    ----------
+    filepath : str, optional
+        The file path to the JSON file for storing todos, by default "./.todo_list.json"
+    """
     app = create_list(file_path_to_json=filepath)
     while True:
         action = questionary.select(
