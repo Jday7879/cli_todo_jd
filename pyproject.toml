@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "questionary>=2.1.1",
+    "rich>=14.2.0",
 ]
 
 [project.optional-dependencies]
@@ -15,8 +16,8 @@ dev = [
 ]
 
 [project.scripts]
-cli_add = "cli_todo.cli_entry:add_item"
-cli_remove = "cli_todo.cli_entry:remove_item"
-cli_list = "cli_todo.cli_entry:list_items"
-cli_clear = "cli_todo.cli_entry:clear_list"
-cli_menu =  "cli_todo.main:cli_menu"
+todo_add = "cli_todo.cli_entry:add_item"
+todo_remove = "cli_todo.cli_entry:remove_item"
+todo_list = "cli_todo.cli_entry:list_items"
+todo_clear = "cli_todo.cli_entry:clear_list"
+todo_menu =  "cli_todo.main:cli_menu"
