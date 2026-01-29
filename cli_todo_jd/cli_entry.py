@@ -18,7 +18,7 @@ app = typer.Typer(help="A tiny todo CLI built with Typer.")
 def add(
     text: list[str] = typer.Argument(..., help="Todo item text (no quotes needed)."),
     filepath: Path = typer.Option(
-        Path(".todo_list.json"),
+        Path(".todo_list.db"),
         "--filepath",
         "-f",
         help="Path to the JSON file used for storage.",
@@ -34,7 +34,7 @@ def add(
 
 @app.command(name="list")
 def list_(
-    filepath: Path = typer.Option(Path(".todo_list.json"), "--filepath", "-f"),
+    filepath: Path = typer.Option(Path(".todo_list.db"), "--filepath", "-f"),
 ) -> None:
     list_items_on_list(filepath)
 
@@ -42,7 +42,7 @@ def list_(
 @app.command()
 def remove(
     index: int = typer.Argument(..., help="1-based index of item to remove."),
-    filepath: Path = typer.Option(Path(".todo_list.json"), "--filepath", "-f"),
+    filepath: Path = typer.Option(Path(".todo_list.db"), "--filepath", "-f"),
 ) -> None:
     remove_item_from_list(index, filepath)
 
@@ -50,7 +50,7 @@ def remove(
 @app.command()
 def clear(
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt."),
-    filepath: Path = typer.Option(Path(".todo_list.json"), "--filepath", "-f"),
+    filepath: Path = typer.Option(Path(".todo_list.db"), "--filepath", "-f"),
 ) -> None:
     if not yes and not typer.confirm(f"Clear all todos in {filepath}?"):
         typer.echo("Cancelled.")
@@ -62,7 +62,7 @@ def clear(
 @app.command(name="menu")
 def menu_(
     filepath: Path = typer.Option(
-        Path(".todo_list.json"),
+        Path(".todo_list.db"),
         "--filepath",
         "-f",
         help="Path to the JSON file used for storage.",
@@ -77,7 +77,7 @@ def parser_optional_args(parser: ArgumentParser):
         "-f",
         "--filepath",
         help="Path to the file to process",
-        default="./.todo_list.json",
+        default="./.todo_list.db",
     )
 
 
