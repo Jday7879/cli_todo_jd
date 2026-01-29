@@ -17,11 +17,9 @@ dev = [
 ]
 
 [project.scripts]
-todo_add = "cli_todo_jd.cli_entry:add_item"
-todo_remove = "cli_todo_jd.cli_entry:remove_item"
-todo_list = "cli_todo_jd.cli_entry:list_items"
-todo_clear = "cli_todo_jd.cli_entry:clear_list"
 todo_menu =  "cli_todo_jd.cli_entry:todo_menu"
+todo = "cli_todo_jd.cli_entry:app"
+
 
 [tool.bumpversion]
 current_version = "0.1.1"

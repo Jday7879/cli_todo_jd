@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from argparse import ArgumentParser
 from cli_todo_jd.main import (
     add_item_to_list,
@@ -6,6 +8,68 @@ from cli_todo_jd.main import (
     clear_list_of_items,
     cli_menu,
 )
+from pathlib import Path
+import typer
+
+app = typer.Typer(help="A tiny todo CLI built with Typer.")
+
+
+@app.command()
+def add(
+    text: list[str] = typer.Argument(..., help="Todo item text (no quotes needed)."),
+    filepath: Path = typer.Option(
+        Path(".todo_list.json"),
+        "--filepath",
+        "-f",
+        help="Path to the JSON file used for storage.",
+    ),
+) -> None:
+    full_text = " ".join(text).strip()
+    if not full_text:
+        raise typer.BadParameter("Todo item text cannot be empty.")
+
+    add_item_to_list(full_text, filepath)
+    typer.echo(f"Added: {full_text}")
+
+
+@app.command(name="list")
+def list_(
+    filepath: Path = typer.Option(Path(".todo_list.json"), "--filepath", "-f"),
+) -> None:
+    list_items_on_list(filepath)
+
+
+@app.command()
+def remove(
+    index: int = typer.Argument(..., help="1-based index of item to remove."),
+    filepath: Path = typer.Option(Path(".todo_list.json"), "--filepath", "-f"),
+) -> None:
+    remove_item_from_list(index, filepath)
+
+
+@app.command()
+def clear(
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt."),
+    filepath: Path = typer.Option(Path(".todo_list.json"), "--filepath", "-f"),
+) -> None:
+    if not yes and not typer.confirm(f"Clear all todos in {filepath}?"):
+        typer.echo("Cancelled.")
+        raise typer.Exit(code=1)
+
+    clear_list_of_items(filepath)
+
+
+@app.command(name="menu")
+def menu_(
+    filepath: Path = typer.Option(
+        Path(".todo_list.json"),
+        "--filepath",
+        "-f",
+        help="Path to the JSON file used for storage.",
+    ),
+) -> None:
+    cli_menu(filepath)
+    typer.echo("Exited menu.")
 
 
 def parser_optional_args(parser: ArgumentParser):
@@ -17,68 +81,13 @@ def parser_optional_args(parser: ArgumentParser):
     )
 
 
-def add_item():
-    parser = ArgumentParser(description="Add a todo item")
-    parser.add_argument(
-        "item",
-        nargs="+",
-        help="The todo item to add (use quotes or multiple words)",
-    )
-    parser_optional_args(parser)
-
-    args = parser.parse_args()
-    args.item = " ".join(args.item)
-    add_item_to_list(args.item, args.filepath)
-
-
-def remove_item():
-    parser = ArgumentParser(description="Remove a todo item by index")
-    parser.add_argument(
-        "index",
-        type=int,
-        help="The index of the todo item to remove (1-based)",
-    )
-    parser_optional_args(parser)
-
-    args = parser.parse_args()
-    remove_item_from_list(args.index, args.filepath)
-
-
-def list_items():
-    parser = ArgumentParser(description="List all todo items")
-    parser_optional_args(parser)
-
-    args = parser.parse_args()
-    list_items_on_list(args.filepath)
-
-
-def clear_list():
-    parser = ArgumentParser(description="Clear all todo items")
-    parser.add_argument(
-        "-y",
-        "--yes",
-        action="store_true",
-        help="Do not prompt for confirmation",
-    )
-    parser_optional_args(parser)
-
-    args = parser.parse_args()
-    list_items_on_list(args.filepath)
-
-    if not args.yes:
-        resp = (
-            input(f"Clear all todo items in '{args.filepath}'? [y/n]: ").strip().lower()
-        )
-        if resp not in ("y", "yes"):
-            return
-
-    # assuming remove_item_from_list(0/None) clears; otherwise replace with your clear implementation
-    clear_list_of_items(args.filepath)
-
-
 def todo_menu():
     parser = ArgumentParser(description="Todo List CLI Menu")
     parser_optional_args(parser)
     args = parser.parse_args()
 
     cli_menu(filepath=args.filepath)
+
+
+if __name__ == "__main__":
+    app()

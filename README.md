@@ -7,16 +7,16 @@ A command line to do list with interactive menu
 This is a command line interface todo list. Once installed, there are two ways to interact 
 with the list. 
 
-### `todo-menu`
+### `todo_menu`
 
-Once installed us `todo_menu` to launch into the interactive menu. From here you can add,
+Once installed use `todo_menu` to launch into the interactive menu. From here you can add,
 remove, list, or clear your todo list. Items in your list are stored (by default) as
 `.todo_list.json`. The menu does also support optional filepaths using `-f` or `--filepath`.
 
 
 ### interacting with todo list without menu
 
-Alternatly you can interact directly using the following commands (`--filepath can be substituted for -f`)
+Alternately you can interact directly using the following commands (`--filepath can be substituted for -f`)
 
 - `todo_add text --filepath optional_path_to_json` used to add an item to your list
 - `todo_remove index --filepath optional_path_to_json` used to remove item number `index`
