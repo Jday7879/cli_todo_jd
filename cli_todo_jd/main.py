@@ -32,7 +32,7 @@ class TodoApp:
             return
 
         try:
-            with sqlite3.connect(self.file_path_to_json) as conn:
+            with sqlite3.connect(self.file_path_to_db) as conn:
                 ensure_schema(conn)
                 with conn:
                     conn.execute(
@@ -197,14 +197,81 @@ class TodoApp:
                 todo_id, item = row
                 with conn:
                     conn.execute(
-                        "UPDATE todos SET done = 1, done_at = datetime('now') WHERE id = ?;",
-                        (todo_id,),
+                        "UPDATE todos SET done = ?, done_at = datetime('now') WHERE id = ?;",
+                        (1, todo_id),
                     )
         except sqlite3.Error as e:
             print(f"Error: Failed to mark todo as done. ({e})")
             return
 
         print(f'Marked todo as done: "{item}"')
+        self._check_and_load_todos(self.file_path_to_db)
+
+    def update_done_data(self, index, done_value, done_at_value, todo_id):
+        text_done_value = "done" if done_value == 1 else "not done"
+        try:
+            with sqlite3.connect(self.file_path_to_db) as conn:
+                ensure_schema(conn)
+
+                row = conn.execute(
+                    "SELECT id, item FROM todos ORDER BY id LIMIT 1 OFFSET ?;",
+                    (index - 1,),
+                ).fetchone()
+                if row is None:
+                    print("Error: Invalid todo index.")
+                    return
+
+                todo_id, item = row
+                with conn:
+                    if done_value:
+                        conn.execute(
+                            "UPDATE todos SET done = ?, done_at = datetime('now') WHERE id = ?;",
+                            (1, todo_id),
+                        )
+                    else:
+                        conn.execute(
+                            "UPDATE todos SET done = ?, done_at = NULL WHERE id = ?;",
+                            (0, todo_id),
+                        )
+        except sqlite3.Error as e:
+            print(f"Error: Failed to mark todo as {text_done_value}. ({e})")
+            return
+
+    def edit_entry(self, index: int, new_text: str) -> None:
+        self._check_and_load_todos(self.file_path_to_db)
+
+        if index < 1 or index > len(self.todos):
+            print("Error: Invalid todo index.")
+            return
+
+        new_text = (new_text or "").strip()
+        if not new_text:
+            print("Error: Todo item cannot be empty.")
+            return
+
+        try:
+            with sqlite3.connect(self.file_path_to_db) as conn:
+                ensure_schema(conn)
+
+                row = conn.execute(
+                    "SELECT id, item FROM todos ORDER BY id LIMIT 1 OFFSET ?;",
+                    (index - 1,),
+                ).fetchone()
+                if row is None:
+                    print("Error: Invalid todo index.")
+                    return
+
+                todo_id, old_item = row
+                with conn:
+                    conn.execute(
+                        "UPDATE todos SET item = ? WHERE id = ?;",
+                        (new_text, todo_id),
+                    )
+        except sqlite3.Error as e:
+            print(f"Error: Failed to edit todo. ({e})")
+            return
+
+        print(f'Edited todo: "{old_item}" to "{new_text}"')
         self._check_and_load_todos(self.file_path_to_db)
 
 
@@ -240,7 +307,6 @@ def add_item_to_list(item: str, filepath: str):
     app = create_list(file_path_to_db=filepath)
     app.add_todo(item)
     app.list_todos()
-    app.write_todos()
 
 
 def list_items_on_list(filepath: str):
@@ -270,7 +336,6 @@ def remove_item_from_list(index: int, filepath: str):
     app = create_list(file_path_to_db=filepath)
     app.remove_todo(index)
     app.list_todos()
-    app.write_todos()
 
 
 def clear_list_of_items(filepath: str):
@@ -284,6 +349,16 @@ def clear_list_of_items(filepath: str):
     """
     app = create_list(file_path_to_db=filepath)
     app.clear_all()
+
+
+def mark_item_as_done(index: int, filepath: str):
+    app = create_list(file_path_to_db=filepath)
+    app.mark_as_done(index)
+
+
+def mark_item_as_not_done(index: int, filepath: str):
+    app = create_list(file_path_to_db=filepath)
+    app.mark_as_not_done(index)
 
 
 def cli_menu(filepath="./.todo_list.db"):
@@ -302,6 +377,7 @@ def cli_menu(filepath="./.todo_list.db"):
             choices=[
                 "Add todo",
                 "List todos",
+                "Update todo status",
                 "Remove todo",
                 "Clear all todos",
                 "Exit",
@@ -312,6 +388,31 @@ def cli_menu(filepath="./.todo_list.db"):
             item = questionary.text("Enter the todo item:").ask()
             app.add_todo(item)
         elif action == "List todos":
+            app.list_todos()
+        elif action == "Update todo status":
+            if not app.todos:
+                print("No todos to update.")
+                continue
+            todo_choice = questionary.select(
+                "Select the todo to update:",
+                choices=["<Back>"] + app.todos,
+            ).ask()
+
+            if todo_choice == "<Back>":
+                continue
+
+            todo_index = app.todos.index(todo_choice) + 1
+            status_choice = questionary.select(
+                "Mark as:",
+                choices=["Done", "Not Done", "<Back>"],
+            ).ask()
+
+            if status_choice == "<Back>":
+                continue
+            elif status_choice == "Done":
+                app.mark_as_done(todo_index)
+            elif status_choice == "Not Done":
+                app.mark_as_not_done(todo_index)
             app.list_todos()
         elif action == "Remove todo":
             if not app.todos:
@@ -338,10 +439,3 @@ def cli_menu(filepath="./.todo_list.db"):
             break
         else:
             break
-
-
-if __name__ == "__main__":
-    TodoApp().mark_as_not_done(1)
-    TodoApp().list_todos()
-    TodoApp().mark_as_done(1)
-    TodoApp().list_todos()

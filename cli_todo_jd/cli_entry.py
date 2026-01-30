@@ -7,6 +7,8 @@ from cli_todo_jd.main import (
     list_items_on_list,
     clear_list_of_items,
     cli_menu,
+    mark_item_as_done,
+    mark_item_as_not_done,
 )
 from pathlib import Path
 import typer
@@ -70,6 +72,24 @@ def menu_(
 ) -> None:
     cli_menu(filepath)
     typer.echo("Exited menu.")
+
+
+@app.command()
+def done(
+    index: int = typer.Argument(..., help="1-based index of item to mark as done."),
+    filepath: Path = typer.Option(Path(".todo_list.db"), "--filepath", "-f"),
+) -> None:
+    mark_item_as_done(index, filepath)
+    list_(filepath=filepath)
+
+
+@app.command()
+def not_done(
+    index: int = typer.Argument(..., help="1-based index of item to mark as done."),
+    filepath: Path = typer.Option(Path(".todo_list.db"), "--filepath", "-f"),
+) -> None:
+    mark_item_as_not_done(index, filepath)
+    list_(filepath=filepath)
 
 
 def parser_optional_args(parser: ArgumentParser):
