@@ -398,7 +398,7 @@ def cli_menu(filepath="./.todo_list.db"):
                 choices=["<Back>"] + app.todos,
             ).ask()
 
-            if todo_choice == "<Back>":
+            if todo_choice == "<Back>" or todo_choice is None:
                 continue
 
             todo_index = app.todos.index(todo_choice) + 1
@@ -407,7 +407,7 @@ def cli_menu(filepath="./.todo_list.db"):
                 choices=["Done", "Not Done", "<Back>"],
             ).ask()
 
-            if status_choice == "<Back>":
+            if status_choice == "<Back>" or status_choice is None:
                 continue
             elif status_choice == "Done":
                 app.mark_as_done(todo_index)
@@ -423,7 +423,7 @@ def cli_menu(filepath="./.todo_list.db"):
                 choices=["<Back>"] + app.todos,
             ).ask()
 
-            if todo_choice == "<Back>":
+            if todo_choice == "<Back>" or todo_choice is None:
                 continue
 
             todo_to_remove = app.todos.index(todo_choice) + 1
