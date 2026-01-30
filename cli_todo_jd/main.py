@@ -45,13 +45,51 @@ class TodoApp:
         print(f'Added todo: "{item}"')
         self._check_and_load_todos(self.file_path_to_db)
 
-    def list_todos(self) -> None:
+    def list_todos(self, *, show: str = "open") -> None:
+        """List todos.
+
+        Parameters
+        ----------
+        show:
+            "open" (default), "done", or "all".
+        """
+        show = (show or "open").lower()
+        if show not in {"open", "done", "all"}:
+            print("Error: show must be one of: open, done, all")
+            return
+
         # Always read fresh so output reflects the DB
         self._check_and_load_todos(self.file_path_to_db)
         if not self.todos:
             print("No todos found.")
             return
-        self._table_print()
+
+        if show == "all":
+            self._table_print(title="Todos")
+            return
+
+        # Filter in-memory to keep this change minimal. (You can later filter in SQL.)
+        filtered_todos: list[str] = []
+        filtered_status: list[int] = []
+        for todo, done in zip(self.todos, self.status, strict=False):
+            if show == "open" and not done:
+                filtered_todos.append(todo)
+                filtered_status.append(done)
+            elif show == "done" and done:
+                filtered_todos.append(todo)
+                filtered_status.append(done)
+
+        if not filtered_todos:
+            print("No todos found.")
+            return
+
+        original_todos, original_status = self.todos, self.status
+        try:
+            self.todos, self.status = filtered_todos, filtered_status
+            title = "Open todos" if show == "open" else "Completed todos"
+            self._table_print(title=title)
+        finally:
+            self.todos, self.status = original_todos, original_status
 
     def remove_todo(self, index: int) -> None:
         # Maintain current UX: index refers to the displayed (1-based) ordering.
@@ -281,7 +319,7 @@ def create_list(file_path_to_db: str = "./.todo_list.db"):
 
     Parameters
     ----------
-    file_path_to_json : str, optional
+    file_path_to_db : str, optional
         The file path to the JSON file for storing todos, by default "./.todo_list.db"
 
     Returns
@@ -309,17 +347,18 @@ def add_item_to_list(item: str, filepath: str):
     app.list_todos()
 
 
-def list_items_on_list(filepath: str):
-    """
-    List all items in the todo list.
+def list_items_on_list(filepath: str, show: str = "open"):
+    """List items in the todo list.
 
     Parameters
     ----------
-    filepath : str
-        The file path to the JSON file for storing todos.
+    filepath:
+        The SQLite database path.
+    show:
+        "open" (default), "done", or "all".
     """
     app = create_list(file_path_to_db=filepath)
-    app.list_todos()
+    app.list_todos(show=show)
 
 
 def remove_item_from_list(index: int, filepath: str):
@@ -388,7 +427,7 @@ def cli_menu(filepath="./.todo_list.db"):
             item = questionary.text("Enter the todo item:").ask()
             app.add_todo(item)
         elif action == "List todos":
-            app.list_todos()
+            app.list_todos(show="all")
         elif action == "Update todo status":
             if not app.todos:
                 print("No todos to update.")
@@ -413,7 +452,7 @@ def cli_menu(filepath="./.todo_list.db"):
                 app.mark_as_done(todo_index)
             elif status_choice == "Not Done":
                 app.mark_as_not_done(todo_index)
-            app.list_todos()
+            app.list_todos(show="all")
         elif action == "Remove todo":
             if not app.todos:
                 print("No todos to remove.")

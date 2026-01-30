@@ -37,8 +37,43 @@ def add(
 @app.command(name="list")
 def list_(
     filepath: Path = typer.Option(Path(".todo_list.db"), "--filepath", "-f"),
+    show_all: bool = typer.Option(
+        False, "--all", "-a", help="Show all todos (open + done)."
+    ),
+    show_done: bool = typer.Option(
+        False, "--done", "-d", help="Show only completed todos."
+    ),
+    show_open: bool = typer.Option(
+        False, "--open", "-o", help="Show only open todos (default)."
+    ),
 ) -> None:
-    list_items_on_list(filepath)
+    """List todos.
+
+    Examples
+    --------
+    - todo list
+    - todo list --done
+    - todo list --all
+    - todo list -a
+    """
+
+    # Choose filter. If nothing specified, default to open.
+    # If the user specifies multiple flags, error out.
+    flags = [show_all, show_done, show_open]
+    if sum(1 for f in flags if f) > 1:
+        raise typer.BadParameter(
+            "Use only one of: --all / -a, --done / -d, --open / -o"
+        )
+
+    if show_all:
+        show = "all"
+    elif show_done:
+        show = "done"
+    else:
+        # default is open (or explicit --open)
+        show = "open"
+
+    list_items_on_list(filepath, show=show)
 
 
 @app.command()
@@ -80,7 +115,7 @@ def done(
     filepath: Path = typer.Option(Path(".todo_list.db"), "--filepath", "-f"),
 ) -> None:
     mark_item_as_done(index, filepath)
-    list_(filepath=filepath)
+    list_items_on_list(filepath=filepath, show="all")
 
 
 @app.command()
@@ -89,7 +124,7 @@ def not_done(
     filepath: Path = typer.Option(Path(".todo_list.db"), "--filepath", "-f"),
 ) -> None:
     mark_item_as_not_done(index, filepath)
-    list_(filepath=filepath)
+    list_items_on_list(filepath=filepath, show="all")
 
 
 def parser_optional_args(parser: ArgumentParser):
