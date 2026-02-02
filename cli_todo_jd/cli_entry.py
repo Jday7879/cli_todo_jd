@@ -4,12 +4,16 @@ from argparse import ArgumentParser
 from cli_todo_jd.main import (
     add_item_to_list,
     remove_item_from_list,
+    remove_item_from_list_by_id,
     list_items_on_list,
     clear_list_of_items,
     cli_menu,
     mark_item_as_done,
     mark_item_as_not_done,
+    mark_item_as_done_by_id,
+    mark_item_as_not_done_by_id,
 )
+from cli_todo_jd.web.app import run_web
 from pathlib import Path
 import typer
 
@@ -78,10 +82,24 @@ def list_(
 
 @app.command()
 def remove(
-    index: int = typer.Argument(..., help="1-based index of item to remove."),
+    todo_id: int | None = typer.Argument(None, help="Todo ID to remove (preferred)."),
+    index: int | None = typer.Option(
+        None,
+        "--index",
+        "-i",
+        help="1-based display index (legacy; use ID instead).",
+    ),
     filepath: Path = typer.Option(Path(".todo_list.db"), "--filepath", "-f"),
 ) -> None:
-    remove_item_from_list(index, filepath)
+    if todo_id is None and index is None:
+        raise typer.BadParameter("Provide either TODO_ID argument or --index/-i")
+    if todo_id is not None and index is not None:
+        raise typer.BadParameter("Provide either TODO_ID or --index/-i, not both")
+
+    if todo_id is not None:
+        remove_item_from_list_by_id(todo_id, filepath)
+    else:
+        remove_item_from_list(index, filepath)
 
 
 @app.command()
@@ -111,20 +129,67 @@ def menu_(
 
 @app.command()
 def done(
-    index: int = typer.Argument(..., help="1-based index of item to mark as done."),
+    todo_id: int | None = typer.Argument(
+        None, help="Todo ID to mark as done (preferred)."
+    ),
+    index: int | None = typer.Option(
+        None,
+        "--index",
+        "-i",
+        help="1-based display index (legacy; use ID instead).",
+    ),
     filepath: Path = typer.Option(Path(".todo_list.db"), "--filepath", "-f"),
 ) -> None:
-    mark_item_as_done(index, filepath)
+    if todo_id is None and index is None:
+        raise typer.BadParameter("Provide either TODO_ID argument or --index/-i")
+    if todo_id is not None and index is not None:
+        raise typer.BadParameter("Provide either TODO_ID or --index/-i, not both")
+
+    if todo_id is not None:
+        mark_item_as_done_by_id(todo_id, filepath)
+    else:
+        mark_item_as_done(index, filepath)
+
+    list_items_on_list(filepath=filepath, show="all")
+
+
+@app.command(name="not-done")
+def not_done(
+    todo_id: int | None = typer.Argument(
+        None, help="Todo ID to mark as not done (preferred)."
+    ),
+    index: int | None = typer.Option(
+        None,
+        "--index",
+        "-i",
+        help="1-based display index (legacy; use ID instead).",
+    ),
+    filepath: Path = typer.Option(Path(".todo_list.db"), "--filepath", "-f"),
+) -> None:
+    if todo_id is None and index is None:
+        raise typer.BadParameter("Provide either TODO_ID argument or --index/-i")
+    if todo_id is not None and index is not None:
+        raise typer.BadParameter("Provide either TODO_ID or --index/-i, not both")
+
+    if todo_id is not None:
+        mark_item_as_not_done_by_id(todo_id, filepath)
+    else:
+        mark_item_as_not_done(index, filepath)
+
     list_items_on_list(filepath=filepath, show="all")
 
 
 @app.command()
-def not_done(
-    index: int = typer.Argument(..., help="1-based index of item to mark as done."),
+def web(
     filepath: Path = typer.Option(Path(".todo_list.db"), "--filepath", "-f"),
+    host: str = typer.Option(
+        "127.0.0.1", help="Host interface to bind the web server."
+    ),
+    port: int = typer.Option(8000, help="Port to run the web server on."),
+    debug: bool = typer.Option(False, help="Run Flask in debug mode."),
 ) -> None:
-    mark_item_as_not_done(index, filepath)
-    list_items_on_list(filepath=filepath, show="all")
+    """Run a local web UI for your todo list."""
+    run_web(filepath, host=host, port=port, debug=debug)
 
 
 def parser_optional_args(parser: ArgumentParser):

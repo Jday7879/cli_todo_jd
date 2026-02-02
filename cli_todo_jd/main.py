@@ -14,13 +14,12 @@ def main():
 
 
 class TodoApp:
-    """
-    A simple command-line todo application.
-    """
+    """A simple command-line todo application."""
 
     def __init__(self, file_path_to_db="./.todo_list.db"):
-        self.todos = []
-        self.status = []
+        self.todo_ids: list[int] = []
+        self.todos: list[str] = []
+        self.status: list[int] = []
         self.file_path_to_db = Path(file_path_to_db)
         self._check_and_load_todos(self.file_path_to_db)
         self._console = Console()
@@ -61,35 +60,52 @@ class TodoApp:
         # Always read fresh so output reflects the DB
         self._check_and_load_todos(self.file_path_to_db)
         if not self.todos:
-            print("No todos found.")
+            print("Your todo list is empty! Start adding some with 'todo add <task>'")
             return
 
         if show == "all":
             self._table_print(title="Todos")
             return
 
-        # Filter in-memory to keep this change minimal. (You can later filter in SQL.)
+        # Filter in-memory to keep this change minimal.
+        filtered_ids: list[int] = []
         filtered_todos: list[str] = []
         filtered_status: list[int] = []
-        for todo, done in zip(self.todos, self.status, strict=False):
+        for todo_id, todo, done in zip(
+            self.todo_ids, self.todos, self.status, strict=False
+        ):
             if show == "open" and not done:
+                filtered_ids.append(todo_id)
                 filtered_todos.append(todo)
                 filtered_status.append(done)
             elif show == "done" and done:
+                filtered_ids.append(todo_id)
                 filtered_todos.append(todo)
                 filtered_status.append(done)
 
         if not filtered_todos:
-            print("No todos found.")
+            print(f"No todos found when filtering on {show}.")
             return
 
-        original_todos, original_status = self.todos, self.status
+        original_ids, original_todos, original_status = (
+            self.todo_ids,
+            self.todos,
+            self.status,
+        )
         try:
-            self.todos, self.status = filtered_todos, filtered_status
+            self.todo_ids, self.todos, self.status = (
+                filtered_ids,
+                filtered_todos,
+                filtered_status,
+            )
             title = "Open todos" if show == "open" else "Completed todos"
             self._table_print(title=title)
         finally:
-            self.todos, self.status = original_todos, original_status
+            self.todo_ids, self.todos, self.status = (
+                original_ids,
+                original_todos,
+                original_status,
+            )
 
     def remove_todo(self, index: int) -> None:
         # Maintain current UX: index refers to the displayed (1-based) ordering.
@@ -127,11 +143,16 @@ class TodoApp:
                 ensure_schema(conn)
                 with conn:
                     conn.execute("DELETE FROM todos;")
+                    # Reset AUTOINCREMENT counter so ids start from 1 again.
+                    # This is SQLite-specific and only applies to tables created with AUTOINCREMENT.
+                    conn.execute("DELETE FROM sqlite_sequence WHERE name = 'todos';")
         except sqlite3.Error as e:
             print(f"Error: Failed to clear todos. ({e})")
             return
 
+        self.todo_ids = []
         self.todos = []
+        self.status = []
         print("Cleared all todos.")
 
     def _check_and_load_todos(self, file_path: Path) -> None:
@@ -151,12 +172,13 @@ class TodoApp:
                     "SELECT id, item, done, created_at, done_at FROM todos ORDER BY id"
                 ).fetchall()
 
-                # In-memory list is used by the interactive menu for selection.
-                # Keep it as a simple list[str] for now.
+                # In-memory lists are used by the interactive menu.
+                self.todo_ids = [int(row[0]) for row in rows]
                 self.todos = [row[1] for row in rows]
                 self.status = [row[2] for row in rows]
         except sqlite3.Error as e:
             print(f"Warning: Failed to load existing todos. Starting fresh. ({e})")
+            self.todo_ids = []
             self.todos = []
             self.status = []
 
@@ -172,11 +194,13 @@ class TodoApp:
         for col in columns:
             table.add_column(str(col))
 
-        for idx, todo in enumerate(self.todos, start=1):
+        for todo_id, todo, done in zip(
+            self.todo_ids, self.todos, self.status, strict=False
+        ):
             table.add_row(
-                f"{idx}.",
+                str(todo_id),
                 str(todo),
-                "[green]✔[/green]" if self.status[idx - 1] else "[red]✖[/red]",
+                "[green]✔[/green]" if done else "[red]✖[/red]",
             )
 
         self._console.print(Padding(table, (2, 2)))
@@ -312,6 +336,108 @@ class TodoApp:
         print(f'Edited todo: "{old_item}" to "{new_text}"')
         self._check_and_load_todos(self.file_path_to_db)
 
+    def remove_by_id(self, todo_id: int) -> None:
+        try:
+            with sqlite3.connect(self.file_path_to_db) as conn:
+                ensure_schema(conn)
+                row = conn.execute(
+                    "SELECT id, item FROM todos WHERE id = ?;",
+                    (todo_id,),
+                ).fetchone()
+                if row is None:
+                    print("Error: Invalid todo id.")
+                    return
+
+                _, removed_item = row
+                with conn:
+                    conn.execute("DELETE FROM todos WHERE id = ?;", (todo_id,))
+        except sqlite3.Error as e:
+            print(f"Error: Failed to remove todo. ({e})")
+            return
+
+        print(f'Removed todo: "{removed_item}"')
+        self._check_and_load_todos(self.file_path_to_db)
+
+    def mark_done_by_id(self, todo_id: int) -> None:
+        try:
+            with sqlite3.connect(self.file_path_to_db) as conn:
+                ensure_schema(conn)
+                row = conn.execute(
+                    "SELECT id, item FROM todos WHERE id = ?;",
+                    (todo_id,),
+                ).fetchone()
+                if row is None:
+                    print("Error: Invalid todo id.")
+                    return
+
+                _, item = row
+                with conn:
+                    conn.execute(
+                        "UPDATE todos SET done = 1, done_at = datetime('now') WHERE id = ?;",
+                        (todo_id,),
+                    )
+        except sqlite3.Error as e:
+            print(f"Error: Failed to mark todo as done. ({e})")
+            return
+
+        print(f'Marked todo as done: "{item}"')
+        self._check_and_load_todos(self.file_path_to_db)
+
+    def mark_not_done_by_id(self, todo_id: int) -> None:
+        try:
+            with sqlite3.connect(self.file_path_to_db) as conn:
+                ensure_schema(conn)
+                row = conn.execute(
+                    "SELECT id, item FROM todos WHERE id = ?;",
+                    (todo_id,),
+                ).fetchone()
+                if row is None:
+                    print("Error: Invalid todo id.")
+                    return
+
+                _, item = row
+                with conn:
+                    conn.execute(
+                        "UPDATE todos SET done = 0, done_at = NULL WHERE id = ?;",
+                        (todo_id,),
+                    )
+        except sqlite3.Error as e:
+            print(f"Error: Failed to mark todo as not done. ({e})")
+            return
+
+        print(f'Marked todo as not done: "{item}"')
+        self._check_and_load_todos(self.file_path_to_db)
+
+    def edit_by_id(self, todo_id: int, new_text: str) -> None:
+        new_text = (new_text or "").strip()
+        if not new_text:
+            print("Error: Todo item cannot be empty.")
+            return
+
+        try:
+            with sqlite3.connect(self.file_path_to_db) as conn:
+                ensure_schema(conn)
+                row = conn.execute(
+                    "SELECT id, item FROM todos WHERE id = ?;",
+                    (todo_id,),
+                ).fetchone()
+                if row is None:
+                    print("Error: Invalid todo id.")
+                    return
+
+                _, old_item = row
+                with conn:
+                    conn.execute(
+                        "UPDATE todos SET item = ? WHERE id = ?;",
+                        (new_text, todo_id),
+                    )
+        except sqlite3.Error as e:
+            print(f"Error: Failed to edit todo. ({e})")
+            return
+
+        print(f'Edited todo: "{old_item}" to "{new_text}"')
+        self._check_and_load_todos(self.file_path_to_db)
+
 
 def create_list(file_path_to_db: str = "./.todo_list.db"):
     """
@@ -398,6 +524,22 @@ def mark_item_as_done(index: int, filepath: str):
 def mark_item_as_not_done(index: int, filepath: str):
     app = create_list(file_path_to_db=filepath)
     app.mark_as_not_done(index)
+
+
+def remove_item_from_list_by_id(todo_id: int, filepath: str):
+    app = create_list(file_path_to_db=filepath)
+    app.remove_by_id(todo_id)
+    app.list_todos(show="all")
+
+
+def mark_item_as_done_by_id(todo_id: int, filepath: str):
+    app = create_list(file_path_to_db=filepath)
+    app.mark_done_by_id(todo_id)
+
+
+def mark_item_as_not_done_by_id(todo_id: int, filepath: str):
+    app = create_list(file_path_to_db=filepath)
+    app.mark_not_done_by_id(todo_id)
 
 
 def cli_menu(filepath="./.todo_list.db"):

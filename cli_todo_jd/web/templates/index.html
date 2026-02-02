@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>cli-todo-jd</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b0f17;
+        --panel: #121a26;
+        --border: #263244;
+        --text: #e6edf3;
+        --muted: #9fb0c0;
+        --accent: #6ea8fe;
+        --danger: #ff6b6b;
+        --ok: #2ecc71;
+        --warn: #ffcc66;
+      }
+
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        margin: 2rem;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      a { color: var(--accent); }
+
+      .row { display: flex; gap: 0.5rem; align-items: center; }
+      .toolbar { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1rem;
+      }
+
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; padding: 0.6rem; border-bottom: 1px solid var(--border); }
+      th { color: var(--muted); font-weight: 600; }
+
+      .done { text-decoration: line-through; color: var(--muted); }
+
+      .badge {
+        display: inline-block;
+        padding: 0.15rem 0.55rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        border: 1px solid var(--border);
+      }
+      .badge-open { background: rgba(255, 204, 102, 0.12); color: var(--warn); }
+      .badge-done { background: rgba(46, 204, 113, 0.12); color: var(--ok); }
+
+      button {
+        cursor: pointer;
+        background: #1b2636;
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.4rem 0.7rem;
+      }
+      button:hover { border-color: #3a4a64; }
+
+      input[type=text] {
+        width: 100%;
+        max-width: 32rem;
+        padding: 0.55rem 0.7rem;
+        background: #0f1622;
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        outline: none;
+      }
+      input[type=text]:focus { border-color: var(--accent); }
+
+      select {
+        background: #0f1622;
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.4rem 0.6rem;
+      }
+
+      hr { border: 0; border-top: 1px solid var(--border); margin: 1rem 0; }
+
+      .muted { color: var(--muted); font-size: 0.9rem; }
+      .danger { color: var(--danger); }
+    </style>
+  </head>
+  <body>
+    <h1>Todo</h1>
+
+    <div class="toolbar">
+      <form method="get" action="/" class="row">
+        <label>View:</label>
+        <select name="show" onchange="this.form.submit()">
+          <option value="open" {% if show == 'open' %}selected{% endif %}>Open</option>
+          <option value="done" {% if show == 'done' %}selected{% endif %}>Done</option>
+          <option value="all" {% if show == 'all' %}selected{% endif %}>All</option>
+        </select>
+      </form>
+
+      <span class="muted">DB: {{ config['TODO_DB_PATH'] }}</span>
+    </div>
+
+    <div class="card" style="margin-bottom: 1rem;">
+      <form method="post" action="/add" class="row">
+        <input type="text" name="item" placeholder="Add a todo..." autocomplete="off" />
+        <button type="submit">Add</button>
+      </form>
+    </div>
+
+    <div class="card">
+      {% if not todos %}
+        <p class="muted">No todos.</p>
+      {% else %}
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 6rem;">ID</th>
+              <th>Item</th>
+              <th style="width: 8rem;">Status</th>
+              <th style="width: 14rem;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in todos %}
+              <tr>
+                <td>{{ t['id'] }}</td>
+                <td class="{% if t['done'] %}done{% endif %}">{{ t['item'] }}</td>
+                <td>
+                  {% if t['done'] %}
+                    <span class="badge badge-done">done</span>
+                  {% else %}
+                    <span class="badge badge-open">open</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <form method="post" action="/toggle/{{ t['id'] }}" style="display:inline">
+                    <button type="submit">Toggle</button>
+                  </form>
+                  <form method="post" action="/delete/{{ t['id'] }}" style="display:inline" onsubmit="return confirm('Delete this todo?');">
+                    <button type="submit" class="danger">Delete</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+
+      <hr />
+
+      <form method="post" action="/clear" onsubmit="return confirm('Clear ALL todos?');" class="row">
+        <input type="hidden" name="confirm" value="yes" />
+        <button type="submit" class="danger">Clear all</button>
+      </form>
+    </div>
+  </body>
+</html>
