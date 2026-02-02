@@ -5,23 +5,29 @@ A command line to do list with interactive menu
 ## What is`cli-todo-jd`?
 
 This is a command line interface todo list. Once installed, there are two ways to interact 
-with the list. 
+with the list stored as a sqlite database 
 
-### `todo_menu`
+### `todo menu`
 
-Once installed use `todo_menu` to launch into the interactive menu. From here you can add,
+Once installed use `todo menu` to launch into the interactive menu. From here you can add,
 remove, list, or clear your todo list. Items in your list are stored (by default) as
-`.todo_list.json`. The menu does also support optional filepaths using `-f` or `--filepath`.
+`.todo_list.db`. The menu does also support optional filepaths using `-f` or `--filepath`.
+
+### `todo web`
+
+Once installed use `todo web` to launch into the interactive web UI. From here you can add,
+remove, list, or clear your todo list. Items in your list are stored (by default) as
+`.todo_list.db`. The menu does also support optional filepaths using `-f` or `--filepath`.
 
 
 ### interacting with todo list without menu
 
 Alternately you can interact directly using the following commands (`--filepath can be substituted for -f`)
 
-- `todo_add text --filepath optional_path_to_json` used to add an item to your list
-- `todo_remove index --filepath optional_path_to_json` used to remove item number `index`
-- `todo_list --filepath optional_path_to_json` used to view list
-- `todo_clear --filepath optional_path_to_json` used to clear list (prompts y/n to confirm)
+- `todo add text --filepath optional_path_to_json` used to add an item to your list
+- `todo remove index --filepath optional_path_to_json` used to remove item number `index`
+- `todo list --filepath optional_path_to_json` used to view list
+- `todo clear --filepath optional_path_to_json` used to clear list (prompts y/n to confirm)
 
 ## Getting started
 
