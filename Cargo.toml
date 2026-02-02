@@ -6,4 +6,4 @@ edition = "2024"
 [dependencies]
 axum = "0.8.8"
 clap = "4.5.56"
-rusqlite = "0.38.0"
+rusqlite = { version = "0.38.0", features = ["bundled"] }
