@@ -48,13 +48,7 @@ impl TodoApp {
         }
         // Let the database handle unique IDs (auto-increment)
         let new_id = None::<i32>;
-        let conn = match Connection::open(&self.file_path_to_db) {
-            Ok(c) => c,
-            Err(e) => {
-                println!("Failed to open database: {}", e);
-                return;
-            }
-        };
+        let conn = self._connect_to_db().unwrap();
 
         let mut stmt = match conn.prepare("INSERT INTO todos (id, item, done) VALUES (?, ?, ?)") {
             Ok(s) => s,
@@ -102,13 +96,7 @@ impl TodoApp {
     }
 
     fn drop_all_from_db(& self) {
-        let conn = match Connection::open(&self.file_path_to_db) {
-            Ok(c) => c,
-            Err(e) => {
-                println!("Failed to open database: {}", e);
-                return;
-            }
-        };
+        let conn = self._connect_to_db().unwrap();
         if let Err(e) = conn.execute("DELETE FROM todos", []) {
             println!("Failed to clear todos from database: {}", e);
             return;
@@ -126,13 +114,7 @@ impl TodoApp {
         //     println!("Todo item with ID: {} not found.", id);
         // }
 
-        let conn = match Connection::open(&self.file_path_to_db) {
-            Ok(c) => c,
-            Err(e) => {
-                println!("Failed to open database: {}", e);
-                return;
-            }
-        };
+        let conn = self._connect_to_db().unwrap();
         let valid_id = match  {
             let mut stmt = conn.prepare("SELECT COUNT(*) FROM todos WHERE id = ?").unwrap();
             let count: i32 = stmt.query_row(params![id], |row| row.get(0)).unwrap();
@@ -152,14 +134,19 @@ impl TodoApp {
         println!("Removed todo item with ID: {}", valid_id);
     }
 
-    fn check_and_load_todos(& mut self) {
+    fn _connect_to_db(& self) -> Option<Connection> {
         let conn = match Connection::open(&self.file_path_to_db) {
             Ok(c) => c,
             Err(e) => {
                 println!("Failed to open database: {}", e);
-                return;
+                return None;
             }
         };
+        Some(conn)
+    }
+    
+    fn check_and_load_todos(& mut self) {
+        let conn =  self._connect_to_db().unwrap();
 
         let mut stmt = match conn.prepare("SELECT id, item, done FROM todos") {
             Ok(s) => s,
@@ -202,13 +189,7 @@ impl TodoApp {
     }
 
     pub fn mark_as_done(& self, id: i32) {
-        let conn = match Connection::open(&self.file_path_to_db) {
-            Ok(c) => c,
-            Err(e) => {
-                println!("Failed to open database: {}", e);
-                return;
-            }
-        };
+        let conn = self._connect_to_db().unwrap();
 
         let valid_id = match  {
             let mut stmt = conn.prepare("SELECT COUNT(*) FROM todos WHERE id = ?").unwrap();
@@ -231,13 +212,7 @@ impl TodoApp {
     }
 
     pub fn mark_as_not_done(& self, id: i32) {
-        let conn = match Connection::open(&self.file_path_to_db) {
-            Ok(c) => c,
-            Err(e) => {
-                println!("Failed to open database: {}", e);
-                return;
-            }
-        };
+        let conn = self._connect_to_db().unwrap();
 
         let valid_id = match  {
             let mut stmt = conn.prepare("SELECT COUNT(*) FROM todos WHERE id = ?").unwrap();
@@ -271,6 +246,10 @@ fn main() {
     _app.mark_as_done(9);
     _app.list_todos();
     _app.mark_as_not_done(9);
+    _app.add_todo("my newest item");
+    _app.list_todos();
+    _app.remove_todo(11);
+    _app.list_todos();
 
 
     // new("./.todo_list.db", "Sample Todo Item");
