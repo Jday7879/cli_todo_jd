@@ -1,5 +1,7 @@
 use std::io::{self, Write};
 use rusqlite::{params, Connection, Result};
+use clap::{Parser, Subcommand};
+
 // Add this struct definition or import the Console type from the appropriate crate/module
 pub struct Console;
 
@@ -66,7 +68,7 @@ impl TodoApp {
         }
 
     pub fn list_todos(& mut self) {
-        self.check_and_load_todos();
+        self._check_and_load_todos();
         if self.todos.is_empty() {
             println!("No todo items found.");
             return;
@@ -86,7 +88,7 @@ impl TodoApp {
         if io::stdin().read_line(&mut input).is_ok() {
             let input = input.trim().to_lowercase();
             if input == "y" || input == "yes" {
-                self.drop_all_from_db();
+                self._drop_all_from_db();
             } else {
                 println!("Clear operation cancelled.");
             }
@@ -95,7 +97,7 @@ impl TodoApp {
         }
     }
 
-    fn drop_all_from_db(& self) {
+    fn _drop_all_from_db(& self) {
         let conn = self._connect_to_db().unwrap();
         if let Err(e) = conn.execute("DELETE FROM todos", []) {
             println!("Failed to clear todos from database: {}", e);
@@ -104,7 +106,7 @@ impl TodoApp {
         println!("All todo items have been cleared from the database.");
     }
 
-    pub fn remove_todo(& self, id: i32) {
+    fn remove_todo(& self, id: i32) {
         // if let Some(pos) = self.todo_ids.iter().position(|&x| x == id) {
         //     self.todo_ids.remove(pos);
         //     self.todos.remove(pos);
@@ -145,7 +147,7 @@ impl TodoApp {
         Some(conn)
     }
     
-    fn check_and_load_todos(& mut self) {
+    fn _check_and_load_todos(& mut self) {
         let conn =  self._connect_to_db().unwrap();
 
         let mut stmt = match conn.prepare("SELECT id, item, done FROM todos") {
@@ -240,17 +242,51 @@ impl TodoApp {
 
 
 
-fn main() {
-    let mut _app = TodoApp::default();
-    _app.list_todos();
-    _app.mark_as_done(9);
-    _app.list_todos();
-    _app.mark_as_not_done(9);
-    _app.add_todo("my newest item");
-    _app.list_todos();
-    _app.remove_todo(11);
-    _app.list_todos();
-
-
-    // new("./.todo_list.db", "Sample Todo Item");
+#[derive(Parser)]
+#[command(name = "Todo CLI App")]
+#[command(version = "1.0.0")]
+#[command(about = "A simple todo CLI app", long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
 }
+
+#[derive(Subcommand)]
+enum Commands {
+    Add {
+        item: String,
+    },
+    List,
+    Done {
+        id: i32,
+    },
+    Undone {
+        id: i32,
+    },
+    Remove {
+        id: i32,
+    },
+    Clear,
+}
+
+
+fn main() {
+    let cli = Cli::parse();
+    let mut app = TodoApp::default();
+
+    match cli.command {
+        Commands::Add { item } => app.add_todo(&item),
+        Commands::List => app.list_todos(),
+        Commands::Done { id } => app.mark_as_done(id),
+        Commands::Undone { id } => app.mark_as_not_done(id),
+        Commands::Remove { id } => app.remove_todo(id),
+        Commands::Clear => app.clear_all(),
+        // If no subcommand is provided, list todos by default
+        // But since clap requires a subcommand, we need to make it optional:
+        // So, change `command: Commands` to `command: Option<Commands>` in Cli,
+        // and handle None here:
+    }
+}
+
+// to run you now need to use cargo run -- <subcommand> [args]
+// e.g., cargo run -- add "Buy groceries"
