@@ -23,13 +23,15 @@ impl Default for TodoApp {
             console: Console,
         }
     }
+}
 
-    fn new(filepath: & str, text: & str) -> Self {
-        let mut app = TodoApp::default();
-        app.file_path_to_db = std::path::PathBuf::from(filepath);
-        app.add_todo(text);
-        app
-    }
+// fn new(filepath: &str, text: &str) -> TodoApp {
+//     let mut app = TodoApp::default();
+//     app.file_path_to_db = std::path::PathBuf::from(filepath);
+//     app.add_todo(text);
+//     app
+// }
+
 // Example of a static/class-level attribute in Rust:
 impl TodoApp {
     // Associated constant (like a static class attribute)
@@ -44,18 +46,33 @@ impl TodoApp {
             println!("Error: Todo item cannot be empty.");
             return;
         }
-        let new_id = if let Some(&last_id) = self.todo_ids.last() {
-            last_id + 1
-        } else {
-            1
+        // Let the database handle unique IDs (auto-increment)
+        let new_id = None::<i32>;
+        let conn = match Connection::open(&self.file_path_to_db) {
+            Ok(c) => c,
+            Err(e) => {
+                println!("Failed to open database: {}", e);
+                return;
+            }
         };
-        self.todo_ids.push(new_id);
-        self.todos.push(item.to_string());
-        self.status.push(0); // 0 for pending
+
+        let mut stmt = match conn.prepare("INSERT INTO todos (id, item, done) VALUES (?, ?, ?)") {
+            Ok(s) => s,
+            Err(e) => {
+            println!("Failed to prepare statement: {}", e);
+            return;
+            }
+        };
+
+        if let Err(e) = stmt.execute(params![new_id, item, 0]) {
+            println!("Failed to insert todo: {}", e);
+            return;
+        }
         println!("Added todo item: {}", item);
         }
 
-    pub fn list_todos(& self) {
+    pub fn list_todos(& mut self) {
+        self.check_and_load_todos();
         if self.todos.is_empty() {
             println!("No todo items found.");
             return;
@@ -67,7 +84,7 @@ impl TodoApp {
         }
         }
 
-    pub fn clear_all(& mut self) {
+    pub fn clear_all(& self) {
         println!("Are you sure you want to clear all todo items? (y/n): ");
         io::stdout().flush().unwrap();
 
@@ -75,10 +92,7 @@ impl TodoApp {
         if io::stdin().read_line(&mut input).is_ok() {
             let input = input.trim().to_lowercase();
             if input == "y" || input == "yes" {
-                self.todo_ids.clear();
-                self.todos.clear();
-                self.status.clear();
-                println!("All todo items have been cleared.");
+                self.drop_all_from_db();
             } else {
                 println!("Clear operation cancelled.");
             }
@@ -87,15 +101,55 @@ impl TodoApp {
         }
     }
 
-    pub fn remove_todo(& mut self, id: i32) {
-        if let Some(pos) = self.todo_ids.iter().position(|&x| x == id) {
-            self.todo_ids.remove(pos);
-            self.todos.remove(pos);
-            self.status.remove(pos);
-            println!("Removed todo item with ID: {}", id);
-        } else {
-            println!("Todo item with ID: {} not found.", id);
+    fn drop_all_from_db(& self) {
+        let conn = match Connection::open(&self.file_path_to_db) {
+            Ok(c) => c,
+            Err(e) => {
+                println!("Failed to open database: {}", e);
+                return;
+            }
+        };
+        if let Err(e) = conn.execute("DELETE FROM todos", []) {
+            println!("Failed to clear todos from database: {}", e);
+            return;
         }
+        println!("All todo items have been cleared from the database.");
+    }
+
+    pub fn remove_todo(& self, id: i32) {
+        // if let Some(pos) = self.todo_ids.iter().position(|&x| x == id) {
+        //     self.todo_ids.remove(pos);
+        //     self.todos.remove(pos);
+        //     self.status.remove(pos);
+        //     println!("Removed todo item with ID: {}", id);
+        // } else {
+        //     println!("Todo item with ID: {} not found.", id);
+        // }
+
+        let conn = match Connection::open(&self.file_path_to_db) {
+            Ok(c) => c,
+            Err(e) => {
+                println!("Failed to open database: {}", e);
+                return;
+            }
+        };
+        let valid_id = match  {
+            let mut stmt = conn.prepare("SELECT COUNT(*) FROM todos WHERE id = ?").unwrap();
+            let count: i32 = stmt.query_row(params![id], |row| row.get(0)).unwrap();
+            count > 0
+        } {
+            true => id,
+            false => {
+                println!("Todo item with ID: {} not found in database.", id);
+                return;
+            }
+            
+        };
+        if let Err(e) = conn.execute("DELETE FROM todos WHERE id = ?", params![valid_id]) {
+            println!("Failed to remove todo from database: {}", e);
+            return;
+        }
+        println!("Removed todo item with ID: {}", valid_id);
     }
 
     fn check_and_load_todos(& mut self) {
@@ -147,6 +201,65 @@ impl TodoApp {
         }
     }
 
+    pub fn mark_as_done(& self, id: i32) {
+        let conn = match Connection::open(&self.file_path_to_db) {
+            Ok(c) => c,
+            Err(e) => {
+                println!("Failed to open database: {}", e);
+                return;
+            }
+        };
+
+        let valid_id = match  {
+            let mut stmt = conn.prepare("SELECT COUNT(*) FROM todos WHERE id = ?").unwrap();
+            let count: i32 = stmt.query_row(params![id], |row| row.get(0)).unwrap();
+            count > 0
+        } {
+            true => id,
+            false => {
+                println!("Todo item with ID: {} not found in database.", id);
+                return;
+            }
+            
+        };
+
+        if let Err(e) = conn.execute("UPDATE todos SET done = 1 WHERE id = ?", params![valid_id]) {
+            println!("Failed to mark todo as done: {}", e);
+            return;
+        }
+        println!("Marked todo item with ID: {} as done.", valid_id);
+    }
+
+    pub fn mark_as_not_done(& self, id: i32) {
+        let conn = match Connection::open(&self.file_path_to_db) {
+            Ok(c) => c,
+            Err(e) => {
+                println!("Failed to open database: {}", e);
+                return;
+            }
+        };
+
+        let valid_id = match  {
+            let mut stmt = conn.prepare("SELECT COUNT(*) FROM todos WHERE id = ?").unwrap();
+            let count: i32 = stmt.query_row(params![id], |row| row.get(0)).unwrap();
+            count > 0
+        } {
+            true => id,
+            false => {
+                println!("Todo item with ID: {} not found in database.", id);
+                return;
+            }
+            
+        };
+
+        if let Err(e) = conn.execute("UPDATE todos SET done = 0 WHERE id = ?", params![valid_id]) {
+            println!("Failed to mark todo as not done: {}", e);
+            return;
+        }
+        println!("Marked todo item with ID: {} as not done.", valid_id);
+    }
+
+
 
 }
 
@@ -154,6 +267,11 @@ impl TodoApp {
 
 fn main() {
     let mut _app = TodoApp::default();
-    _app.check_and_load_todos();
     _app.list_todos();
+    _app.mark_as_done(9);
+    _app.list_todos();
+    _app.mark_as_not_done(9);
+
+
+    // new("./.todo_list.db", "Sample Todo Item");
 }
