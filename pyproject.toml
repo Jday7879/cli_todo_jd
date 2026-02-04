@@ -21,6 +21,7 @@ dev = [
 [project.scripts]
 todo_menu =  "cli_todo_jd.cli_entry:todo_menu"
 todo = "cli_todo_jd.cli_entry:app"
+todo_web = "cli_todo_jd.cli_entry:todo_web"
 
 
 [tool.bumpversion]

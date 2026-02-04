@@ -209,5 +209,20 @@ def todo_menu():
     cli_menu(filepath=args.filepath)
 
 
+def todo_web():
+    parser = ArgumentParser(description="Todo List Web Server")
+    parser_optional_args(parser)
+    parser.add_argument(
+        "--host", help="Host interface to bind the web server.", default="127.0.0.1"
+    )
+    parser.add_argument(
+        "--port", help="Port to run the web server on.", default=8000, type=int
+    )
+    parser.add_argument("--debug", help="Run Flask in debug mode.", action="store_true")
+    args = parser.parse_args()
+
+    run_web(db_path=args.filepath, host=args.host, port=args.port, debug=args.debug)
+
+
 if __name__ == "__main__":
     app()
