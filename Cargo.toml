@@ -6,4 +6,6 @@ edition = "2024"
 [dependencies]
 axum = "0.8.8"
 clap = { version = "4", features = ["derive"] }
+pyo3 = { version = "0.21", features = ["extension-module"] }
 rusqlite = { version = "0.38.0", features = ["bundled"] }
+
