@@ -1,6 +1,6 @@
 [project]
 name = "cli-todo-jd"
-version = "0.2.2"
+version = "0.3.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -25,7 +25,7 @@ todo_web = "cli_todo_jd.cli.cli_entry:todo_web"
 
 
 [tool.bumpversion]
-current_version = "0.2.2"
+current_version = "0.3.0"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 search = "{current_version}"
