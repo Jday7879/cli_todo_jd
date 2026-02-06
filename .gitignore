@@ -14,3 +14,4 @@ wheels/
 .todo_list.json
 .todo_list.db
 uv.lock
+target/
