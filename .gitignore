@@ -13,8 +13,10 @@ wheels/
 .cli_todo.json
 .todo_list.json
 .todo_list.db*
-uv.lock
 
 # Added by cargo
 
 /target
+.todo_list.db
+uv.lock
+target/

@@ -1,10 +1,8 @@
 from pathlib import Path
-import questionary
 from rich.console import Console
 from rich.table import Table
 from rich.padding import Padding
 import sqlite3
-
 from cli_todo_jd.storage.schema import ensure_schema
 from cli_todo_jd.storage.migrate import migrate_from_json
 
@@ -24,6 +22,9 @@ class TodoApp:
         self._check_and_load_todos(self.file_path_to_db)
         self._console = Console()
 
+    def reload_todos(self) -> None:
+        self._check_and_load_todos(self.file_path_to_db)
+
     def add_todo(self, item: str) -> None:
         item = (item or "").strip()
         if not item:
@@ -42,7 +43,6 @@ class TodoApp:
             return
 
         print(f'Added todo: "{item}"')
-        self._check_and_load_todos(self.file_path_to_db)
 
     def list_todos(self, *, show: str = "open") -> None:
         """List todos.
@@ -135,7 +135,6 @@ class TodoApp:
             return
 
         print(f'Removed todo: "{removed_item}"')
-        self._check_and_load_todos(self.file_path_to_db)
 
     def clear_all(self) -> None:
         try:
@@ -235,7 +234,6 @@ class TodoApp:
             return
 
         print(f'Marked todo as not done: "{item}"')
-        self._check_and_load_todos(self.file_path_to_db)
 
     def mark_as_done(self, index: int) -> None:
         self._check_and_load_todos(self.file_path_to_db)
@@ -267,7 +265,6 @@ class TodoApp:
             return
 
         print(f'Marked todo as done: "{item}"')
-        self._check_and_load_todos(self.file_path_to_db)
 
     def update_done_data(self, index, done_value, done_at_value, todo_id):
         text_done_value = "done" if done_value == 1 else "not done"
@@ -334,7 +331,6 @@ class TodoApp:
             return
 
         print(f'Edited todo: "{old_item}" to "{new_text}"')
-        self._check_and_load_todos(self.file_path_to_db)
 
     def remove_by_id(self, todo_id: int) -> None:
         try:
@@ -356,7 +352,6 @@ class TodoApp:
             return
 
         print(f'Removed todo: "{removed_item}"')
-        self._check_and_load_todos(self.file_path_to_db)
 
     def mark_done_by_id(self, todo_id: int) -> None:
         try:
@@ -381,7 +376,6 @@ class TodoApp:
             return
 
         print(f'Marked todo as done: "{item}"')
-        self._check_and_load_todos(self.file_path_to_db)
 
     def mark_not_done_by_id(self, todo_id: int) -> None:
         try:
@@ -406,7 +400,6 @@ class TodoApp:
             return
 
         print(f'Marked todo as not done: "{item}"')
-        self._check_and_load_todos(self.file_path_to_db)
 
     def edit_by_id(self, todo_id: int, new_text: str) -> None:
         new_text = (new_text or "").strip()
@@ -436,187 +429,3 @@ class TodoApp:
             return
 
         print(f'Edited todo: "{old_item}" to "{new_text}"')
-        self._check_and_load_todos(self.file_path_to_db)
-
-
-def create_list(file_path_to_db: str = "./.todo_list.db"):
-    """
-    Create a new todo list.
-
-    Parameters
-    ----------
-    file_path_to_db : str, optional
-        The file path to the JSON file for storing todos, by default "./.todo_list.db"
-
-    Returns
-    -------
-    TodoApp
-        An instance of the TodoApp class.
-    """
-    app = TodoApp(file_path_to_db=file_path_to_db)
-    return app
-
-
-def add_item_to_list(item: str, filepath: str):
-    """
-    Add a new item to the todo list.
-
-    Parameters
-    ----------
-    item : str
-        The todo item to add.
-    filepath : str
-        The file path to the JSON file for storing todos.
-    """
-    app = create_list(file_path_to_db=filepath)
-    app.add_todo(item)
-    app.list_todos()
-
-
-def list_items_on_list(filepath: str, show: str = "open"):
-    """List items in the todo list.
-
-    Parameters
-    ----------
-    filepath:
-        The SQLite database path.
-    show:
-        "open" (default), "done", or "all".
-    """
-    app = create_list(file_path_to_db=filepath)
-    app.list_todos(show=show)
-
-
-def remove_item_from_list(index: int, filepath: str):
-    """
-    remove an item from the todo list using index
-
-    Parameters
-    ----------
-    index : int
-        The index of the todo item to remove.
-    filepath : str
-        The file path to the JSON file for storing todos.
-    """
-    app = create_list(file_path_to_db=filepath)
-    app.remove_todo(index)
-    app.list_todos()
-
-
-def clear_list_of_items(filepath: str):
-    """
-    Clear all items from the todo list.
-
-    Parameters
-    ----------
-    filepath : str
-        The file path to the JSON file for storing todos.
-    """
-    app = create_list(file_path_to_db=filepath)
-    app.clear_all()
-
-
-def mark_item_as_done(index: int, filepath: str):
-    app = create_list(file_path_to_db=filepath)
-    app.mark_as_done(index)
-
-
-def mark_item_as_not_done(index: int, filepath: str):
-    app = create_list(file_path_to_db=filepath)
-    app.mark_as_not_done(index)
-
-
-def remove_item_from_list_by_id(todo_id: int, filepath: str):
-    app = create_list(file_path_to_db=filepath)
-    app.remove_by_id(todo_id)
-    app.list_todos(show="all")
-
-
-def mark_item_as_done_by_id(todo_id: int, filepath: str):
-    app = create_list(file_path_to_db=filepath)
-    app.mark_done_by_id(todo_id)
-
-
-def mark_item_as_not_done_by_id(todo_id: int, filepath: str):
-    app = create_list(file_path_to_db=filepath)
-    app.mark_not_done_by_id(todo_id)
-
-
-def cli_menu(filepath="./.todo_list.db"):
-    """
-    Display the command-line interface menu for the todo list.
-
-    Parameters
-    ----------
-    filepath : str, optional
-        The file path to the JSON file for storing todos, by default "./.todo_list.db"
-    """
-    app = create_list(file_path_to_db=filepath)
-    while True:
-        action = questionary.select(
-            "What would you like to do?",
-            choices=[
-                "Add todo",
-                "List todos",
-                "Update todo status",
-                "Remove todo",
-                "Clear all todos",
-                "Exit",
-            ],
-        ).ask()
-
-        if action == "Add todo":
-            item = questionary.text("Enter the todo item:").ask()
-            app.add_todo(item)
-        elif action == "List todos":
-            app.list_todos(show="all")
-        elif action == "Update todo status":
-            if not app.todos:
-                print("No todos to update.")
-                continue
-            todo_choice = questionary.select(
-                "Select the todo to update:",
-                choices=["<Back>"] + app.todos,
-            ).ask()
-
-            if todo_choice == "<Back>" or todo_choice is None:
-                continue
-
-            todo_index = app.todos.index(todo_choice) + 1
-            status_choice = questionary.select(
-                "Mark as:",
-                choices=["Done", "Not Done", "<Back>"],
-            ).ask()
-
-            if status_choice == "<Back>" or status_choice is None:
-                continue
-            elif status_choice == "Done":
-                app.mark_as_done(todo_index)
-            elif status_choice == "Not Done":
-                app.mark_as_not_done(todo_index)
-            app.list_todos(show="all")
-        elif action == "Remove todo":
-            if not app.todos:
-                print("No todos to remove.")
-                continue
-            todo_choice = questionary.select(
-                "Select the todo to remove:",
-                choices=["<Back>"] + app.todos,
-            ).ask()
-
-            if todo_choice == "<Back>" or todo_choice is None:
-                continue
-
-            todo_to_remove = app.todos.index(todo_choice) + 1
-            app.remove_todo(todo_to_remove)
-
-        elif action == "Clear all todos":
-            confirm = questionary.confirm(
-                "Are you sure you want to clear all todos?"
-            ).ask()
-            if confirm:
-                app.clear_all()
-        elif action == "Exit":
-            break
-        else:
-            break

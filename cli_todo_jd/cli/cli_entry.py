@@ -1,18 +1,19 @@
 from __future__ import annotations
 
 from argparse import ArgumentParser
-from cli_todo_jd.main import (
+from cli_todo_jd.helpers import (
     add_item_to_list,
     remove_item_from_list,
     remove_item_from_list_by_id,
     list_items_on_list,
     clear_list_of_items,
-    cli_menu,
     mark_item_as_done,
     mark_item_as_not_done,
     mark_item_as_done_by_id,
     mark_item_as_not_done_by_id,
+    edit_item_in_list_by_id,
 )
+from cli_todo_jd.cli.cli_menu import cli_menu
 from cli_todo_jd.web.app import run_web
 from pathlib import Path
 import typer
@@ -114,6 +115,20 @@ def clear(
     clear_list_of_items(filepath)
 
 
+@app.command()
+def edit(
+    todo_id: int = typer.Argument(..., help="Todo ID to edit."),
+    new_text: list[str] = typer.Argument(..., help="New text for the todo item."),
+    filepath: Path = typer.Option(Path(".todo_list.db"), "--filepath", "-f"),
+) -> None:
+    new_text_stripped = " ".join(new_text).strip()
+    if not new_text_stripped:
+        raise typer.BadParameter("New todo item text cannot be empty.")
+
+    edit_item_in_list_by_id(todo_id, new_text_stripped, filepath)
+    typer.echo(f'Edited todo ID {todo_id} to: "{new_text_stripped}"')
+
+
 @app.command(name="menu")
 def menu_(
     filepath: Path = typer.Option(
@@ -207,6 +222,21 @@ def todo_menu():
     args = parser.parse_args()
 
     cli_menu(filepath=args.filepath)
+
+
+def todo_web():
+    parser = ArgumentParser(description="Todo List Web Server")
+    parser_optional_args(parser)
+    parser.add_argument(
+        "--host", help="Host interface to bind the web server.", default="127.0.0.1"
+    )
+    parser.add_argument(
+        "--port", help="Port to run the web server on.", default=8000, type=int
+    )
+    parser.add_argument("--debug", help="Run Flask in debug mode.", action="store_true")
+    args = parser.parse_args()
+
+    run_web(db_path=args.filepath, host=args.host, port=args.port, debug=args.debug)
 
 
 if __name__ == "__main__":
